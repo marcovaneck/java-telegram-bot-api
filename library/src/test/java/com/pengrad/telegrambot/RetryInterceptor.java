@@ -1,12 +1,13 @@
 package com.pengrad.telegrambot;
 
-import com.google.gson.*;
-import com.pengrad.telegrambot.model.*;
-import com.pengrad.telegrambot.response.*;
+import com.pengrad.telegrambot.model.ResponseParameters;
+import com.pengrad.telegrambot.response.BaseResponse;
+import okhttp3.Interceptor;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
-import java.io.*;
-
-import okhttp3.*;
+import java.io.IOException;
 
 /**
  * Stas Parshin
@@ -15,7 +16,6 @@ import okhttp3.*;
 public class RetryInterceptor implements Interceptor {
 
     private final int defaultSleepMillis;
-    private final Gson gson = new Gson();
 
     public RetryInterceptor() {
         this(1000);
@@ -35,10 +35,13 @@ public class RetryInterceptor implements Interceptor {
                 Response response = chain.proceed(request);
                 if (response.isSuccessful()) {
                     return response;
-                } else if (response.code() != 429) {
+                }
+                if (response.code() != 429) {
                     return response;
-                } else {
-                    BaseResponse baseResponse = gson.fromJson(response.body().string(), BaseResponse.class);
+                }
+                ResponseBody body = response.body();
+                if(body != null) {
+                    BaseResponse baseResponse = BotUtils.fromJson(body.string(), BaseResponse.class);
                     ResponseParameters params = baseResponse.parameters();
                     int sleepTimeMillis;
                     if (params != null && params.retryAfter() != null) {
@@ -58,8 +61,12 @@ public class RetryInterceptor implements Interceptor {
                 } catch (InterruptedException ignored) {}
             }
         }
-        if (exception instanceof IOException) throw (IOException) exception;
-        else if (exception != null) throw new RuntimeException(exception);
-        else throw new RuntimeException("empty exception");
+        if (exception instanceof IOException) {
+            throw (IOException) exception;
+        }
+        if(exception == null) {
+            throw new RuntimeException("empty exception");
+        }
+        throw new RuntimeException(exception);
     }
 }

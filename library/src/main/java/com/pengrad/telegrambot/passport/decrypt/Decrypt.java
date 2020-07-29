@@ -1,6 +1,6 @@
 package com.pengrad.telegrambot.passport.decrypt;
 
-import com.google.gson.Gson;
+import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.passport.Credentials;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class Decrypt {
         byte[] d = base64(data);
         byte[] encryptedData = decryptAes256Cbc(secretHash.key(), secretHash.iv(), d);
         String credStr = new String(encryptedData);
-        return new Gson().fromJson(credStr, Credentials.class);
+        return BotUtils.fromJson(credStr, Credentials.class);
     }
 
     public static String decryptData(String data, String dataHash, String secret) throws Exception {

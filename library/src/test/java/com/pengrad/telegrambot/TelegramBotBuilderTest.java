@@ -1,17 +1,17 @@
 package com.pengrad.telegrambot;
 
-import com.google.gson.*;
-import com.pengrad.telegrambot.model.*;
-import com.pengrad.telegrambot.request.*;
+import com.pengrad.telegrambot.model.File;
+import com.pengrad.telegrambot.request.GetMe;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import org.junit.Test;
 
-import org.junit.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-import java.util.concurrent.*;
-import java.util.function.*;
-
-import okhttp3.*;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Stas Parshin
@@ -51,7 +51,7 @@ public class TelegramBotBuilderTest {
     @Test
     public void fileApiUrl() {
         String fileApiUrl = "fileApiUrl";
-        File file = new Gson().fromJson("{file_path:\"path\"}", File.class);
+        File file = BotUtils.fromJson("{file_path:\"path\"}", File.class);
 
         TelegramBot bot = builder.fileApiUrl(fileApiUrl).build();
         String path = bot.getFullFilePath(file);

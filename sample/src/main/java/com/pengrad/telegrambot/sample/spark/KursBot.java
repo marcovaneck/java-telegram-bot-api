@@ -1,9 +1,9 @@
 package com.pengrad.telegrambot.sample.spark;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
@@ -20,7 +20,12 @@ import spark.Route;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Properties;
@@ -45,10 +50,10 @@ public class KursBot implements Route {
     }
 
     @Override
-    public Object handle(Request request, Response response) throws Exception {
+    public Object handle(Request request, Response response) {
         System.out.println("KursBot handle: " + request);
 
-        Update update = new Gson().fromJson(request.body(), Update.class);
+        Update update = BotUtils.fromJson(request.body(), Update.class);
         Long chatId = update.message().chat().id();
         String text = update.message().text();
         if (text == null) return "empty message?";
@@ -82,7 +87,7 @@ public class KursBot implements Route {
     public String getOil() {
         String result = "Нефть";
         try {
-            JsonObject jsonObject = new Gson().fromJson(readStringFromUrl("https://www.quandl.com/api/v1/datasets/CHRIS/ICE_B1.json"), JsonObject.class);
+            JsonObject jsonObject = BotUtils.fromJson(readStringFromUrl("https://www.quandl.com/api/v1/datasets/CHRIS/ICE_B1.json"), JsonObject.class);
             float oil = jsonObject.getAsJsonArray("data").get(0).getAsJsonArray().get(4).getAsFloat();
             result += " " + oil;
         } catch (IOException e) {
@@ -95,7 +100,7 @@ public class KursBot implements Route {
         String url = "https://query.yahooapis.com/v1/public/yql?q=select+*+from+yahoo.finance.xchange+where+pair+=+%22USDRUB,EURRUB%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
         String result = "Биржа \n";
         try {
-            JsonObject jsonObject = new Gson().fromJson(readStringFromUrl(url), JsonObject.class);
+            JsonObject jsonObject = BotUtils.fromJson(readStringFromUrl(url), JsonObject.class);
             JsonArray rates = jsonObject.getAsJsonObject("query").getAsJsonObject("results").getAsJsonArray("rate");
             for (JsonElement jsonElement : rates) {
                 JsonObject jsRate = jsonElement.getAsJsonObject();

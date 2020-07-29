@@ -1,6 +1,11 @@
 package com.pengrad.telegrambot.impl;
 
-import com.pengrad.telegrambot.*;
+import com.pengrad.telegrambot.BotUtils;
+import com.pengrad.telegrambot.Callback;
+import com.pengrad.telegrambot.ExceptionHandler;
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.TelegramException;
+import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
@@ -57,7 +62,7 @@ public class UpdatesHandler {
                             exceptionHandler.onException(new TelegramException(message, response));
                         } else {
                             Platform.get().log(Platform.INFO,
-                                    "Update listener error for request " + request.toWebhookResponse() +
+                                    "Update listener error for request " + BotUtils.toWebhookResponse(request) +
                                             " with response " + response.errorCode() + " " + response.description(), null);
                         }
                     }

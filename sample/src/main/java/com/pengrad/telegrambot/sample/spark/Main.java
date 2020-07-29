@@ -5,7 +5,10 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import static spark.Spark.*;
+import static spark.Spark.get;
+import static spark.Spark.ipAddress;
+import static spark.Spark.port;
+import static spark.Spark.post;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -29,7 +32,7 @@ public class Main {
 
     private static class Test implements Route {
         @Override
-        public Object handle(Request request, Response response) throws Exception {
+        public Object handle(Request request, Response response) {
             return "ok, test";
         }
     }

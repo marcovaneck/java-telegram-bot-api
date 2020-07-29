@@ -2,11 +2,14 @@ package com.pengrad.telegrambot;
 
 import com.google.gson.Gson;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.BaseRequest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * stas
@@ -16,7 +19,7 @@ public class BotUtils {
 
     private BotUtils() {}
 
-    private static Gson gson = new Gson();
+    private static final Gson gson = new Gson();
 
     public static Update parseUpdate(String update) {
         return gson.fromJson(update, Update.class);
@@ -35,4 +38,17 @@ public class BotUtils {
         return os.toByteArray();
     }
 
+    public static <R> R fromJson(String jsonString, Class<R> resClass) {
+        return gson.fromJson(jsonString,resClass);
+    }
+
+    public static String toJson(Object obj) {
+        return gson.toJson(obj);
+    }
+
+    public static String toWebhookResponse(BaseRequest<?,?> request) {
+        Map<String, Object> fullMap = new LinkedHashMap<>(request.getParameters());
+        fullMap.put("method", request.getMethod());
+        return gson.toJson(fullMap);
+    }
 }

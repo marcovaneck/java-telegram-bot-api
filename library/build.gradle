@@ -5,13 +5,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile 'com.google.code.gson:gson:2.8.6'
-    compile 'com.squareup.okhttp3:okhttp:3.12.10'
-    compile 'com.squareup.okhttp3:logging-interceptor:3.12.10'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.10'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.10'
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'nl.jqno.equalsverifier:equalsverifier:3.1.13'
-    testCompile 'org.reflections:reflections:0.9.12'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.1.13'
+    testImplementation 'org.reflections:reflections:0.9.12'
 }
 
 jacoco {
@@ -26,7 +26,7 @@ jacocoTestReport {
 }
 
 task fatJar(type: Jar) {
-    baseName = rootProject.name + '-full'
+    archiveFileName = rootProject.name + '-full'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }

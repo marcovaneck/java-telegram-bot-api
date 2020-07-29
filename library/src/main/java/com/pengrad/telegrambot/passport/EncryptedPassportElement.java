@@ -1,6 +1,6 @@
 package com.pengrad.telegrambot.passport;
 
-import com.google.gson.Gson;
+import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.File;
 import com.pengrad.telegrambot.passport.decrypt.Decrypt;
@@ -38,7 +38,7 @@ public class EncryptedPassportElement implements Serializable {
         SecureValue secureValue = credentials.secureData().ofType(type);
         DataCredentials dataCredentials = secureValue.data();
         String dataStr = Decrypt.decryptData(data, dataCredentials.dataHash(), dataCredentials.secret());
-        return new Gson().fromJson(dataStr, clazz);
+        return BotUtils.fromJson(dataStr, clazz);
     }
 
     public byte[] decryptFile(PassportFile passportFile, FileCredentials fileCredentials, TelegramBot bot) throws Exception {

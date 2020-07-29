@@ -1,6 +1,5 @@
 package com.pengrad.telegrambot;
 
-import com.google.gson.Gson;
 import com.pengrad.telegrambot.impl.FileApi;
 import com.pengrad.telegrambot.impl.TelegramBotClient;
 import com.pengrad.telegrambot.impl.UpdatesHandler;
@@ -8,15 +7,15 @@ import com.pengrad.telegrambot.model.File;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.response.BaseResponse;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
-
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
  * Stas Parshin
@@ -38,7 +37,7 @@ public class TelegramBot {
         this.updatesHandler = builder.updatesHandler;
     }
 
-    public <T extends BaseRequest, R extends BaseResponse> R execute(BaseRequest<T, R> request) {
+    public <T extends BaseRequest<T, R>, R extends BaseResponse> R execute(BaseRequest<T, R> request) {
         return api.send(request);
     }
 
@@ -50,13 +49,12 @@ public class TelegramBot {
         return fileApi.getFullFilePath(file.filePath());
     }
 
-    public byte[] getFileContent(File file) throws Exception {
+    public byte[] getFileContent(File file) throws IOException {
         String fileUrl = getFullFilePath(file);
         URLConnection connection = new URL(fileUrl).openConnection();
-        InputStream is = connection.getInputStream();
-        byte[] data = BotUtils.getBytesFromInputStream(is);
-        is.close();
-        return data;
+        try ( InputStream is = connection.getInputStream()) {
+            return BotUtils.getBytesFromInputStream(is);
+        }
     }
 
     public void setUpdatesListener(UpdatesListener listener) {
@@ -94,7 +92,7 @@ public class TelegramBot {
 
         public Builder(String botToken) {
             this.botToken = botToken;
-            api = new TelegramBotClient(client(null), gson(), apiUrl(API_URL, botToken));
+            api = new TelegramBotClient(client(null), apiUrl(API_URL, botToken));
             fileApi = new FileApi(botToken);
             updatesHandler = new UpdatesHandler(100);
         }
@@ -128,7 +126,7 @@ public class TelegramBot {
             if (okHttpClient != null || apiUrl != null) {
                 OkHttpClient client = okHttpClient != null ? okHttpClient : client(null);
                 String baseUrl = apiUrl(apiUrl != null ? apiUrl : API_URL, botToken);
-                api = new TelegramBotClient(client, gson(), baseUrl);
+                api = new TelegramBotClient(client, baseUrl);
             }
             if (fileApiUrl != null) {
                 fileApi = new FileApi(fileApiUrl, botToken);
@@ -147,10 +145,6 @@ public class TelegramBot {
 
         private static Interceptor httpLoggingInterceptor() {
             return new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
-        }
-
-        private static Gson gson() {
-            return new Gson();
         }
 
         private static String apiUrl(String apiUrl, String botToken) {

@@ -15,7 +15,7 @@ import spark.Route;
 abstract public class BotHandler implements Route {
 
     @Override
-    public Object handle(Request request, Response response) throws Exception {
+    public Object handle(Request request, Response response) {
         Update update = BotUtils.parseUpdate(request.body());
         Message message = update.message();
 

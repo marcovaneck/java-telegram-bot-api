@@ -1,13 +1,24 @@
 package com.pengrad.telegrambot.impl;
 
-import com.google.gson.Gson;
+import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.Callback;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.response.BaseResponse;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -19,35 +30,41 @@ public class TelegramBotClient {
 
     private final OkHttpClient client;
     private OkHttpClient clientWithTimeout;
-    private final Gson gson;
     private final String baseUrl;
 
-    public TelegramBotClient(OkHttpClient client, Gson gson, String baseUrl) {
+    public TelegramBotClient(OkHttpClient client, String baseUrl) {
         this.client = client;
-        this.gson = gson;
         this.baseUrl = baseUrl;
         this.clientWithTimeout = client;
     }
 
-    public <T extends BaseRequest, R extends BaseResponse> void send(final T request, final Callback<T, R> callback) {
+    public <T extends BaseRequest<T,R>, R extends BaseResponse> void send(final T request, final Callback<T, R> callback) {
         OkHttpClient client = getOkHttpClient(request);
         client.newCall(createRequest(request)).enqueue(new okhttp3.Callback() {
             @Override
             public void onResponse(Call call, Response response) {
-                R result = null;
-                Exception exception = null;
-                try {
-                    result = gson.fromJson(response.body().string(), request.getResponseType());
-                } catch (Exception e) {
-                    exception = e;
-                }
-                if (result != null) {
-                    callback.onResponse(request, result);
-                } else if (exception != null) {
-                    IOException ioEx = exception instanceof IOException ? (IOException) exception : new IOException(exception);
-                    callback.onFailure(request, ioEx);
-                } else {
+                int responseCode = response.code();
+
+                ResponseBody body = response.body();
+                if(body == null) {
                     callback.onFailure(request, new IOException("Empty response"));
+                    return;
+                }
+                String bodyText = null;
+                try {
+                    bodyText = body.string();
+                    R result = BotUtils.fromJson(bodyText, request.getResponseType());
+                    if (result == null) {
+                        callback.onFailure(request, new IOException("Empty response (deserialization)"));
+                    } else {
+                        callback.onResponse(request, result);
+                    }
+                } catch (Throwable e) {
+                    if(bodyText == null) {
+                        callback.onFailure(request, new IOException(e.getMessage() + "\nResponseCode: "+responseCode+"\nBody: N/A", e));
+                    } else {
+                        callback.onFailure(request, new IOException(e.getMessage() + "\nResponseCode: "+responseCode+"\nBody: [" + bodyText + "]", e));
+                    }
                 }
             }
 
@@ -58,17 +75,28 @@ public class TelegramBotClient {
         });
     }
 
-    public <T extends BaseRequest, R extends BaseResponse> R send(final BaseRequest<T, R> request) {
+    public <T extends BaseRequest<T, R>, R extends BaseResponse> R send(final BaseRequest<T, R> request) throws RuntimeException {
+        String bodyText = null;
+        int responseCode = -1;
         try {
             OkHttpClient client = getOkHttpClient(request);
             Response response = client.newCall(createRequest(request)).execute();
-            return gson.fromJson(response.body().string(), request.getResponseType());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            responseCode = response.code();
+            ResponseBody body = response.body();
+            if(body == null) {
+                throw new RuntimeException("Empty response");
+            }
+            bodyText = body.string();
+            return BotUtils.fromJson(bodyText, request.getResponseType());
+        } catch (Throwable e) {
+            if(bodyText == null) {
+                throw new RuntimeException(e.getMessage() + "\nResponseCode: "+responseCode+"\nBody: N/A", e);
+            }
+            throw new RuntimeException(e.getMessage() + "\nResponseCode: "+responseCode+"\nBody: [" + bodyText + "]", e);
         }
     }
 
-    private OkHttpClient getOkHttpClient(BaseRequest request) {
+    private OkHttpClient getOkHttpClient(BaseRequest<?, ?> request) {
         int timeoutMillis = request.getTimeoutSeconds() * 1000;
 
         if (client.readTimeoutMillis() == 0 || client.readTimeoutMillis() > timeoutMillis) return client;
@@ -78,14 +106,14 @@ public class TelegramBotClient {
         return clientWithTimeout;
     }
 
-    private Request createRequest(BaseRequest request) {
+    private Request createRequest(BaseRequest<?, ?> request) {
         return new Request.Builder()
                 .url(baseUrl + request.getMethod())
                 .post(createRequestBody(request))
                 .build();
     }
 
-    private RequestBody createRequestBody(BaseRequest<?, ?> request) {
+    RequestBody createRequestBody(BaseRequest<?, ?> request) {
         if (request.isMultipart()) {
             MediaType contentType = MediaType.parse(request.getContentType());
 
@@ -99,7 +127,7 @@ public class TelegramBotClient {
                 } else if (value instanceof File) {
                     builder.addFormDataPart(name, request.getFileName(), RequestBody.create(contentType, (File) value));
                 } else {
-                    builder.addFormDataPart(name, String.valueOf(value));
+                    builder.addFormDataPart(name, toParamValue(value));
                 }
             }
 
@@ -107,9 +135,26 @@ public class TelegramBotClient {
         } else {
             FormBody.Builder builder = new FormBody.Builder();
             for (Map.Entry<String, Object> parameter : request.getParameters().entrySet()) {
-                builder.add(parameter.getKey(), String.valueOf(parameter.getValue()));
+                builder.add(parameter.getKey(), toParamValue(parameter.getValue()));
             }
             return builder.build();
         }
+    }
+
+    private final static List<Class<?>> useToString = Collections.unmodifiableList(
+            Arrays.asList(
+                    int.class,
+                    Integer.class,
+                    float.class,
+                    Float.class,
+                    double.class,
+                    Double.class,
+                    String.class));
+
+    String toParamValue(Object obj) {
+        if(useToString.contains(obj.getClass())) {
+            return String.valueOf(obj);
+        }
+        return BotUtils.toJson(obj);
     }
 }
