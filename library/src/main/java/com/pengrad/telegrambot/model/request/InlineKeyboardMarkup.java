@@ -19,22 +19,21 @@ public class InlineKeyboardMarkup extends Keyboard implements Serializable {
         this.inline_keyboard = new ArrayList<>();
     }
 
-    @Deprecated
     public InlineKeyboardMarkup(InlineKeyboardButton[]... keyboard) {
-        this.inline_keyboard = new ArrayList<>(keyboard==null ? 0 : keyboard.length);
+        this.inline_keyboard = new ArrayList<>();
         if(keyboard!=null) {
-            for (InlineKeyboardButton[] line : keyboard) {
-                this.inline_keyboard.add(Arrays.asList(line));
+            for (InlineKeyboardButton[] row : keyboard) {
+                addRow(row);
             }
         }
     }
 
     public static InlineKeyboardMarkup create(InlineKeyboardButton... keyboard) {
-        return new InlineKeyboardMarkup().addLine(keyboard);
+        return new InlineKeyboardMarkup().addRow(keyboard);
     }
 
-    public InlineKeyboardMarkup addLine(InlineKeyboardButton... keyboard) {
-        this.inline_keyboard.add(new ArrayList<>(Arrays.asList(keyboard)));
+    public InlineKeyboardMarkup addRow(InlineKeyboardButton... keyboard) {
+        this.inline_keyboard.add(Arrays.asList(keyboard));
         return this;
     }
 

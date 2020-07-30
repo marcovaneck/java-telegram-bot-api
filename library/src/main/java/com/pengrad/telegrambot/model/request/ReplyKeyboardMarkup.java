@@ -2,9 +2,8 @@ package com.pengrad.telegrambot.model.request;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * stas
@@ -30,18 +29,18 @@ public class ReplyKeyboardMarkup extends Keyboard implements Serializable {
     }
 
     public static ReplyKeyboardMarkup create(String... firstLine) {
-        return new ReplyKeyboardMarkup().addLine(firstLine);
+        return new ReplyKeyboardMarkup().addRow(firstLine);
     }
 
     public static ReplyKeyboardMarkup create(KeyboardButton... firstLine) {
-        return new ReplyKeyboardMarkup().addLine(firstLine);
+        return new ReplyKeyboardMarkup().addRow(firstLine);
     }
 
     @Deprecated
     public ReplyKeyboardMarkup(String[]... keyboard) {
         this();
         for (String[] line : keyboard) {
-            addLine(line);
+            addRow(line);
         }
     }
 
@@ -49,17 +48,21 @@ public class ReplyKeyboardMarkup extends Keyboard implements Serializable {
     public ReplyKeyboardMarkup(KeyboardButton[]... keyboard) {
         this();
         for (KeyboardButton[] line : keyboard) {
-            addLine(line);
+            addRow(line);
         }
     }
 
-    public ReplyKeyboardMarkup addLine(KeyboardButton... keyboard) {
-        this.keyboard.add(Stream.of(keyboard).collect(Collectors.toList()));
+    public ReplyKeyboardMarkup addRow(KeyboardButton... keyboard) {
+        this.keyboard.add(Arrays.asList(keyboard));
         return this;
     }
 
-    public ReplyKeyboardMarkup addLine(String... keyboard) {
-        this.keyboard.add(Stream.of(keyboard).map(KeyboardButton::new).collect(Collectors.toList()));
+    public ReplyKeyboardMarkup addRow(String... keyboard) {
+        List<KeyboardButton> newRow = new ArrayList<>();
+        for(String button:keyboard) {
+            newRow.add(new KeyboardButton(button));
+        }
+        this.keyboard.add(newRow);
         return this;
     }
 
@@ -67,7 +70,7 @@ public class ReplyKeyboardMarkup extends Keyboard implements Serializable {
     public ReplyKeyboardMarkup(String[][] keyboard, boolean resize_keyboard, boolean one_time_keyboard, boolean selective) {
         this(resize_keyboard,one_time_keyboard,selective);
         for (String[] line : keyboard) {
-            addLine(line);
+            addRow(line);
         }
     }
 

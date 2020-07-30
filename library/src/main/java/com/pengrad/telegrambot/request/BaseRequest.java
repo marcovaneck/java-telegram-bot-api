@@ -1,5 +1,6 @@
 package com.pengrad.telegrambot.request;
 
+import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.response.BaseResponse;
 
 import java.util.LinkedHashMap;
@@ -61,4 +62,10 @@ abstract public class BaseRequest<T extends BaseRequest<T,R>, R extends BaseResp
         return 0;
     }
 
+
+    public String toWebhookResponse() {
+        Map<String, Object> fullMap = new LinkedHashMap<>(getParameters());
+        fullMap.put("method", getMethod());
+        return BotUtils.toJson(fullMap);
+    }
 }

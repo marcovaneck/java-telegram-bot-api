@@ -1792,7 +1792,7 @@ public class TelegramBotTest {
 
     @Test
     public void toWebhookResponse() {
-        assertEquals("{\"method\":\"getMe\"}", BotUtils.toWebhookResponse(new GetMe()));
+        assertEquals("{\"method\":\"getMe\"}", new GetMe().toWebhookResponse());
     }
 
     @Test

@@ -57,7 +57,7 @@ public class TelegramBotClientTest {
 
         Assert.assertEquals(expected, oldBody);
 
-        Keyboard newKeyboard = new ReplyKeyboardMarkup().addLine("Button0.1","Button0.2").addLine("Button1.1","Button1.2").oneTimeKeyboard(true).resizeKeyboard(true);
+        Keyboard newKeyboard = new ReplyKeyboardMarkup().addRow("Button0.1","Button0.2").addRow("Button1.1","Button1.2").oneTimeKeyboard(true).resizeKeyboard(true);
         SendMessage newRequest = new SendMessage("chatId","ChattieChat").parseMode(ParseMode.MarkdownV2).replyMarkup(newKeyboard);
 
         RequestBody newRequestBody = client.createRequestBody(newRequest);
